@@ -330,3 +330,29 @@ public class WebMvcConfig aextends WebMvcConfigurationSupport {
    ```
 
    
+
+
+
+# 自定义异常处理
+
+## 1. 创建类
+
+```
+/**
+ * 自定义业务异常
+ */
+public class CustomException extends RuntimeException{
+    public CustomException(String message) {
+        super(message);
+    }
+}
+```
+
+
+
+## 2. 使用
+
+```
+throw new CustomException("当前分类下关联了套餐，不能删除");
+```
+

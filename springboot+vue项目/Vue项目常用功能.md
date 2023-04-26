@@ -150,6 +150,57 @@ Vue.use(ElementUI)
 
 
 
+## 4. vuex
+
+1. 安装
+
+   ```
+   npm i vuex@3
+   ```
+
+2. 创建components/store/index/js
+
+   ```
+   import Vue from "vue";
+   import Vuex from "vuex"
+   Vue.use(Vuex)
+   
+   const state = {
+       nickname: '',
+   }
+   
+   const mutations = {
+       saveNickname(state, nick) {
+           state.nickname = nick;
+       }
+   }
+   
+   const actions = {}
+   
+   import loginModule from "@/components/store/modules/loginModule";
+   export default new Vuex.Store({
+       actions,
+       mutations,
+       state,
+       modules: {
+           loginModule
+       }
+   })
+   
+   ```
+
+3. 使用
+
+   ```
+   this.$store.state.nickname
+   this.$store.commit("mutation名字",参数)
+   this.$store.dispatch('actions的名字', 参数)
+   ```
+
+   
+
+
+
 ## 其他
 
 1. 配置端口号
@@ -351,3 +402,4 @@ white-space：
    ```
 
    > val返回当前的页码数！
+
