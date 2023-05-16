@@ -356,3 +356,298 @@ public class CustomException extends RuntimeException{
 throw new CustomException("当前分类下关联了套餐，不能删除");
 ```
 
+
+
+
+
+
+
+# 邮件系统
+
+> 推荐学习网站
+>
+> https://www.cnblogs.com/tianmengwei/p/5058088.html#:~:text=MimeMessages
+
+## 1. 导入依赖
+
+```
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-mail</artifactId>
+</dependency>
+```
+
+
+
+## 2. 代码使用
+
+使用SimpleMailMessage
+
+```
+JavaMailSenderImpl javaMailSender = new JavaMailSenderImpl();
+
+javaMailSender.setHost("smtp.qq.com");  //设置发送方的邮箱格式
+javaMailSender.setProtocol("smtp");     //设置协议
+javaMailSender.setUsername("1252074183@qq.com");    //发送方账号
+javaMailSender.setPassword("vennihzjcgaxjbji");     //发送方授权码
+javaMailSender.setPort(587);                        //端口号
+javaMailSender.setDefaultEncoding("UTF-8");         //编码
+
+SimpleMailMessage message = new SimpleMailMessage();
+message.setTo("20216928@stu.neu.edu.cn");           //收件方邮箱
+message.setFrom("1252074183@qq.com");               //必须与发送发账号相同！！！
+message.setSubject("测试！");                        //标题
+message.setText("hello mail!!!");                   //正文内容
+
+Properties properties = new Properties();           //配置
+properties.put("mail.smtp.auth", "true");
+properties.put("mail.smtp.timeout", "25000");
+
+javaMailSender.setJavaMailProperties(properties);
+javaMailSender.send(message);
+```
+
+
+
+## 3. 发送html格式
+
+使用MimeMessage
+
+```
+JavaMailSenderImpl javaMailSender = new JavaMailSenderImpl();
+
+javaMailSender.setHost("smtp.qq.com");  //设置发送方的邮箱格式
+javaMailSender.setProtocol("smtp");     //设置协议
+javaMailSender.setUsername("1252074183@qq.com");    //发送方账号
+javaMailSender.setPassword("vennihzjcgaxjbji");     //发送方授权码
+javaMailSender.setPort(587);                        //端口号
+javaMailSender.setDefaultEncoding("UTF-8");         //编码
+
+MimeMessage message = javaMailSender.createMimeMessage();
+MimeMessageHelper helper = new MimeMessageHelper(message, true);//通过helper配置
+
+helper.setTo("20216928@stu.neu.edu.cn");           //收件方邮箱
+helper.setFrom("1252074183@qq.com");               //必须与发送发账号相同！！！
+helper.setSubject("测试！");                        //标题
+helper.setText("<h1>hello mail!!!</h1>", true);//正文内容，true为发送html格式
+
+Properties properties = new Properties();           //配置
+properties.put("mail.smtp.auth", "true");
+properties.put("mail.smtp.timeout", "25000");
+javaMailSender.setJavaMailProperties(properties);
+
+javaMailSender.send(message);
+```
+
+
+
+
+
+# 处理excel
+
+## 写
+
+### 1. 导入依赖
+
+```
+<dependency>
+    <groupId>com.alibaba</groupId>
+    <artifactId>easyexcel</artifactId>
+    <version>3.1.1</version>
+</dependency>
+```
+
+
+
+### 2. 实体类
+
+> @ExcelProperty("用户编号")	列名	还有个index属性，指定列的顺序
+>
+> @ExcelIgnore	排除的列名
+
+```
+import com.alibaba.excel.annotation.ExcelIgnore;
+import com.alibaba.excel.annotation.ExcelProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.util.Date;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class User {
+    @ExcelProperty("用户编号")
+    private Integer userId;
+    @ExcelProperty("姓名")
+    private String userName;
+    @ExcelProperty("性别")
+    private String gender;
+    @ExcelProperty("工资")
+    private Double salary;
+    @ExcelProperty("入职时间")
+    private Date hireDate;
+
+    // 排除的属性!
+    @ExcelIgnore
+    private String desc;
+}
+```
+
+
+
+### 3. @ExcelProperty详解
+
+属性：
+
+1. value：列名，不写默认变量名
+
+   如果写成一个数组
+
+   ```
+   @ExcelProperty(value = {"group1", "用户编号"}, index = 0)
+   private Integer userId;
+   @ExcelProperty(value = {"group1", "姓名"}, index = 1)
+   private String userName;
+   ```
+
+   会实现分组效果
+
+2. index：列顺序
+
+
+
+### 4. 格式化
+
+```
+@NumberFormat(value = "###.#") // 数字格式化,保留1位小数
+private Double salary;
+@ExcelProperty(value = "入职时间", index = 2)
+@DateTimeFormat(value = "yyyy年MM月dd日 HH时mm分ss秒") // 日期格式化
+private Date hireDate;
+```
+
+
+
+### 5. 控制excel样式
+
+```
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
+@Builder
+@HeadRowHeight(value = 30) // 头部行高
+@ContentRowHeight(value = 25) // 内容行高
+@ColumnWidth(value = 20) // 列宽
+// 头背景设置成红色 IndexedColors.RED.getIndex()
+@HeadStyle(fillPatternType = FillPatternType.SOLID_FOREGROUND, fillForegroundColor = 10)
+// 头字体设置成20, 字体默认宋体
+@HeadFontStyle(fontName = "宋体", fontHeightInPoints = 20)
+// 内容的背景设置成绿色  IndexedColors.GREEN.getIndex()
+@ContentStyle(fillPatternType = FillPatternType.SOLID_FOREGROUND, fillForegroundColor = 17)
+// 内容字体设置成20, 字体默认宋体
+@ContentFontStyle(fontName = "宋体", fontHeightInPoints = 20)
+public class DemoStyleData {
+
+    // 字符串的头背景设置成粉红 IndexedColors.PINK.getIndex()
+    @HeadStyle(fillPatternType = FillPatternType.SOLID_FOREGROUND, fillForegroundColor = 14)
+    // 字符串的头字体设置成20
+    @HeadFontStyle(fontHeightInPoints = 30)
+    // 字符串的内容背景设置成天蓝 IndexedColors.SKY_BLUE.getIndex()
+    @ContentStyle(fillPatternType = FillPatternType.SOLID_FOREGROUND, fillForegroundColor = 40)
+    // 字符串的内容字体设置成20,默认宋体
+    @ContentFontStyle(fontName = "宋体", fontHeightInPoints = 20)
+    @ExcelProperty(value = "字符串标题")
+    private String string;
+    @ExcelProperty(value = "日期标题")
+    private Date date;
+    @ExcelProperty(value = "数字标题")
+    private Double doubleData;
+    // lombok 会生成getter/setter方法
+}
+```
+
+
+
+## 读
+
+实体类与上面一样
+
+```
+List<User> users = new ArrayList<>();
+EasyExcel.read(path, User.class, new AnalysisEventListener() {
+    /*每读取一行就调用一次*/
+    @Override
+    public void invoke(Object o, AnalysisContext analysisContext) {
+        User user = (User) o;
+        users.add(user);
+    }
+    /*全部读取完后调用*/
+    @Override
+    public void doAfterAllAnalysed(AnalysisContext analysisContext) {
+        System.out.println(users);
+        for (User user : users) {
+            System.out.println(user);
+        }
+    }
+}).sheet().doRead();
+```
+
+若要读取全部sheet
+
+```
+.sheet().doRead()改成.doReadAll()
+```
+
+
+
+
+
+# 常用功能
+
+## 1. 字符串中变量添加
+
+举例：
+
+```
+String context = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>测试系统</title>
+    </head>
+    <body>
+        <h1>{0}</h1>
+        <h1>{1}</h1>
+        <h1>hello mail</h1><br>
+        账号：<input type="text"><br>
+        密码：<input type="password">
+    </body>
+    </html>
+""";
+
+context = MessageFormat.format(context,"ocean", "sea");
+```
+
+
+
+## 2. 常用正则表达式
+
+```
+m-n位的数字：^\d{m,n}$
+
+英文和数字：
+^[A-Za-z0-9]+$ 或 ^[A-Za-z0-9]{4,40}$
+
+长度为3-20的所有字符：^.{3,20}$
+
+由数字、26个英文字母或者下划线组成的字符串：
+ ^\w+$ 或 ^\w{3,20}$
+ 
+ 中文、英文、数字包括下划线：
+ ^[\u4E00-\u9FA5A-Za-z0-9_]+$
+```
+
