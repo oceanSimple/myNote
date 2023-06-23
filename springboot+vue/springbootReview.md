@@ -1905,3 +1905,260 @@ EasyExcel.read(path, User.class, new AnalysisEventListener() {
 .sheet().doRead()改成.doReadAll()
 ```
 
+
+
+
+
+# 拦截器
+
+1. 创建拦截器
+
+   ```
+   import jakarta.servlet.http.HttpServletRequest;
+   import jakarta.servlet.http.HttpServletResponse;
+   import org.springframework.web.servlet.HandlerInterceptor;
+   import org.springframework.web.servlet.ModelAndView;
+   
+   public class MyInterceptor implements HandlerInterceptor {
+       @Override
+       public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+           System.out.println("pre");
+           return HandlerInterceptor.super.preHandle(request, response, handler);
+       }
+   
+       @Override
+       public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+           System.out.println("after");
+           HandlerInterceptor.super.postHandle(request, response, handler, modelAndView);
+       }
+   
+       @Override
+       public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+           System.out.println("complete");
+           HandlerInterceptor.super.afterCompletion(request, response, handler, ex);
+       }
+   }
+   ```
+
+2. 加入配置类
+
+   ```
+   @Override
+       protected void addInterceptors(InterceptorRegistry registry) {
+           registry.addInterceptor(new MyInterceptor())
+                   .addPathPatterns("/**");
+       }
+   ```
+
+
+
+
+
+# AOP
+
+## 实例
+
+1. 导入依赖
+
+   ```
+   <dependency>
+       <groupId>org.springframework.boot</groupId>
+       <artifactId>spring-boot-starter-aop</artifactId>
+       <version>3.0.6</version>
+   </dependency>
+   ```
+
+   
+
+2. 配置aop类
+
+   ```
+   import org.aspectj.lang.ProceedingJoinPoint;
+   import org.aspectj.lang.annotation.Around;
+   import org.aspectj.lang.annotation.Aspect;
+   import org.aspectj.lang.annotation.Pointcut;
+   import org.springframework.stereotype.Component;
+   
+   @Aspect
+   @Component
+   public class AopPrac {
+       @Pointcut("execution(* com.ocean.aop.Controller.*(..))")
+       public void aop1(){}
+   
+       @Around("aop1()")
+       public void around(ProceedingJoinPoint joinPoint) {
+           System.out.println("pre test1...");
+           try {
+               joinPoint.proceed();
+           } catch (Throwable e) {
+               throw new RuntimeException(e);
+           }
+           System.out.println("after test1...");
+       }
+   }
+   ```
+
+
+
+## 知识点
+
+1. execution表达式
+   - 修饰符-可选
+   - 返回值类型-必选   *表示任意返回值
+   - 方法名-必选   *表示任意方法
+   - 参数-必选
+     - ()代表没有参数
+     - (..)代表匹配任意数量、任意类型参数
+     - (java.lang.String)   匹配一个String类型参数
+     - (java.lang.String)   匹配任意String类型参数
+   - 异常-可选
+
+
+
+ 2. **ProceedingJoinPoint**用法
+
+    ```
+    //拦截的实体类
+    Object target = point.getTarget();
+    
+    //拦截的方法名称
+    String methodName = point.getSignature().getName();
+    
+    //拦截的方法参数
+    Object[] args = point.getArgs();
+    
+    //拦截的放参数类型
+    Class[] parameterTypes = ((MethodSignature)point.getSignature()).getMethod().getParameterTypes();
+    
+    object = point.proceed(); //目标方法的执行
+    ```
+
+
+
+# Restful风格
+
+1. 请求方式
+
+   | 请求方式         | 含义                                 |
+   | ---------------- | ------------------------------------ |
+   | GET（SELECT）    | 从服务器取出资源（一项或多项）       |
+   | POST（CREATE）   | 在服务器新建一个资源                 |
+   | PUT（UPDATE）    | 在服务器更新资源（更新完整资源）     |
+   | PATCH（UPDATE）  | 在服务器更新资源， PATCH更新个别属性 |
+   | DELETE（DELETE） | 从服务器删除资源                     |
+
+
+
+2. 相关注解
+
+   注解							   作用
+   @RestController		 由 @Controller + @ResponseBody组成（返回 JSON 数据格式）
+   @PathVariable			URL 中的 {xxx} 占位符可以通过@PathVariable(“xxx“) 绑定到控制器处理方法的形参中
+   @RequestMapping	注解用于请求地址的解析，是最常用的一种注解
+   @GetMapping			查询请求
+   @PostMapping		   添加请求
+   @PutMapping			 更新请求
+   @DeleteMapping	    删除请求
+   @RequestParam		将请求参数绑定到你控制器的方法参数上（是springmvc中接收普通参数的注解）
+
+
+
+3. 举例
+
+   - ```
+     @RestController
+     @RequestMapping("/users") // 下面的每个控制器方法的请求路径都有前缀 /users
+     public class UserController
+     {
+      @GetMapping("/{id}")
+      public String getById(@PathVariable Integer id)
+         {
+             return "getById";
+         }
+     }
+     ```
+
+     
+
+   - ```
+     @RestController
+     @RequestMapping("/students")
+     public class StudentController {
+     ​
+         // Mock data - replace with database queries later
+         private static List<Student> students = new ArrayList<>(Arrays.asList(
+                 new Student(1, "Alice", 20),
+                 new Student(2, "Bob", 21),
+                 new Student(3, "Charlie", 22)
+         ));
+     ​
+         // GET /students - get all students
+         @GetMapping("")
+         public List<Student> getAllStudents() {
+             return students;
+         }
+     ​
+         // GET /students/{id} - get a student by id
+         @GetMapping("/{id}")
+         public Student getStudentById(@PathVariable int id) {
+             for (Student s : students) {
+                 if (s.getId() == id) {
+                     return s;
+                 }
+             }
+             return null;  // Return null if student not found
+         }
+     ​
+         // POST /students - create a new student
+         @PostMapping("")
+         public ResponseEntity<String> createStudent(@RequestBody Student student) {
+             students.add(student);
+             return ResponseEntity.status(HttpStatus.CREATED).build();
+         }
+     ​
+         // PUT /students/{id} - update an existing student
+         @PutMapping("/{id}")
+         public ResponseEntity<String> updateStudent(@PathVariable int id, @RequestBody Student updatedStudent) {
+             for (int i = 0; i < students.size(); i++) {
+                 if (students.get(i).getId() == id) {
+                     students.set(i, updatedStudent);
+                     return ResponseEntity.status(HttpStatus.OK).build();
+                 }
+             }
+             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();  // Return 404 if student not found
+         }
+     ​
+         // DELETE /students/{id} - delete a student by id
+         @DeleteMapping("/{id}")
+         public ResponseEntity<String> deleteStudentById(@PathVariable int id) {
+             for (int i = 0; i < students.size(); i++) {
+                 if (students.get(i).getId() == id) {
+                     students.remove(i);
+                     return ResponseEntity.status(HttpStatus.OK).build();
+                 }
+             }
+             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();  // Return 404 if student not found
+         }
+     }
+     ```
+
+     
+
+
+
+
+
+
+# spring-security
+
+1. 导入依赖
+
+   ```
+   <dependency>
+       <groupId>org.springframework.boot</groupId>
+       <artifactId>spring-boot-starter-security</artifactId>
+       <version>3.0.6</version>
+   </dependency>
+   ```
+
+   
